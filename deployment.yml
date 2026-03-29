@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  backend-deployment
+  labels:
+    app: backend
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: gusbaptista97/backend:1.0
+        ports:
+        - containerPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - image: gusbaptista97/meubanco:1.0
+        imagePullPolicy: Always
+        name: mysql
+        ports:
+        - containerPort: 3306
+          name: mysql
+        
+        volumeMounts:
+        - name: local
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: local
+        persistentVolumeClaim:
+          claimName: local
+
+--- 
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: local
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath: 
+    path: /meubanco/
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: local
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
+
